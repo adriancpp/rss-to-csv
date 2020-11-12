@@ -7,7 +7,7 @@ include_once('Tools.php');
 use SimpleXMLElement;
 use AdrianWitkowskiRekrutacjaHRtec\Tools\Tools as Tools;
 
-class Rss
+final class Rss
 {
     private $filename;
     private $url;
@@ -62,6 +62,7 @@ class Rss
 
     public function init()
     {
+        $success = false;
         // przygotowanie pod kodowanie daty według PL
         date_default_timezone_set('Europe/Warsaw');
         $this->tools = new Tools();
@@ -69,34 +70,40 @@ class Rss
         try
         {
             $this->rss = new SimpleXMLElement(file_get_contents($this->url));
+            $success = true;
         }
         catch( Exception $e ) 
         {
             echo "Wystąpił błąd przy pobieraniu rss: ".$e; 
+            $success = false;
         }
+
+        return $success;
     }
 
     public function checkParameters( $argc, $argv ): bool
     {
+        $success = true;
+
         if( $argc < 2 )
         {
             echo "Nie podano parametru!\n";
             echo $this->CLI_HELP_INFO;
-            exit;
+            $success = false;
         }
 
         if( $argc > 4 )
         {
             echo "Zbyt wiele paramterów!\n";
             echo $this->CLI_HELP_INFO;
-            exit;
+            $success = false;
         }
 
         if( !($argv[1] == "csv:simple" || $argv[1] == "csv:extended") )
         {
             echo "Nieprawidłowy parametr!\n";
             echo $this->CLI_HELP_INFO;
-            exit;
+            $success = false;
         }
         else
         {
@@ -107,15 +114,21 @@ class Rss
         }
 
         if(isset($argv[2]) )
-            $this->url = $argv[2];
+            $this->setUrl($argv[2]);
         else
-            $this->url = "https://blog.nationalgeographic.org/rss";
+            $this->setUrl("https://blog.nationalgeographic.org/rss");
 
         if(isset($argv[3]) )
             $this->filename = $argv[3];
         else
             $this->filename = "simple_export.csv";
 
-        return true;
+        return $success;
+    }
+
+    // funkcja na potrzeby testów
+    public function setUrl($url)
+    {
+        $this->url = $url;
     }
 };
